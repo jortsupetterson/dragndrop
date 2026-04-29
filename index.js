@@ -56,10 +56,12 @@ function stopWatch(watcher, elementToWatch) {
 }
 
 // in-browser-testing-libs.ts
+var controls = document.querySelector("div.controls");
+if (!controls) throw new Error();
 var dragTarget = document.createElement("h1");
 dragTarget.textContent = "moi";
 dragTarget.classList.add("moi");
-void document.body.appendChild(dragTarget);
+void controls.appendChild(dragTarget);
 var watchers = [];
 for (let i = 0; i < 10; i++) {
   const watcher = document.createElement("div");
@@ -68,29 +70,18 @@ width: 100px;
 height: 100px;
 background: red;
 `;
-  void document.body.appendChild(watcher);
+  void controls.appendChild(watcher);
   watchers.push(watcher);
 }
 void dragTarget.addEventListener("pointerdown", async (event) => {
   dragTarget.style.transition = `transform 0s ease`;
-  let append;
-  void drag(
-    event,
-    async (dragged, watcher) => {
-      if (append) dragged.removeEventListener("pointerup", append);
-      append = () => {
-        watcher.appendChild(dragged);
-        if (append) dragged.removeEventListener("pointerup", append);
-        append = void 0;
-      };
-      dragged.addEventListener("pointerup", append);
-    },
-    async (dragged) => {
-      if (!append) return;
+  void drag(event, async (dragged, watcher) => {
+    const append = () => {
+      watcher.appendChild(dragged);
       dragged.removeEventListener("pointerup", append);
-      append = void 0;
-    }
-  );
+    };
+    dragged.addEventListener("pointerup", append);
+  });
   for (const watcher of watchers) {
     void startWatch(watcher, dragTarget);
   }
