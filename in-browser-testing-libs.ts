@@ -4,7 +4,7 @@ const controls: HTMLElement | null = document.querySelector('div.controls')
 if (!controls) throw new Error()
 
 const boxes: HTMLElement[] = []
-for (let i = 0; i < 9; i++) {
+for (let i = 0; i < 12; i++) {
   const box = document.createElement('div')
 
   box.textContent = `${i + 1}`

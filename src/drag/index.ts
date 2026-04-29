@@ -26,6 +26,7 @@ export function drag(
   }
 
   const move = (event: PointerEvent): void => {
+    if (event.pointerId !== pointerEvent.pointerId) return
     const x = Number(target.dataset.x ?? 0) + event.movementX
     const y = Number(target.dataset.y ?? 0) + event.movementY
     target.dataset.x = String(x)
@@ -45,7 +46,7 @@ export function drag(
 
   const stop = (event: PointerEvent): void => {
     if (event.pointerId !== pointerEvent.pointerId) return
-    void target.removeEventListener('pointermove', move)
+    void ownerDocument.removeEventListener('pointermove', move, true)
     void ownerDocument.removeEventListener('pointerup', stop, true)
     void ownerDocument.removeEventListener('pointercancel', stop, true)
     if (target.hasPointerCapture(event.pointerId))
@@ -57,7 +58,7 @@ export function drag(
     }
   }
   void target.setPointerCapture(pointerEvent.pointerId)
-  void target.addEventListener('pointermove', move)
+  void ownerDocument.addEventListener('pointermove', move, true)
   void ownerDocument.addEventListener('pointerup', stop, true)
   void ownerDocument.addEventListener('pointercancel', stop, true)
 }

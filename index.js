@@ -23,6 +23,7 @@ function drag(pointerEvent, onIntersectingStart, onIntersectingStop) {
     }
   };
   const move = (event) => {
+    if (event.pointerId !== pointerEvent.pointerId) return;
     const x = Number(target.dataset.x ?? 0) + event.movementX;
     const y = Number(target.dataset.y ?? 0) + event.movementY;
     target.dataset.x = String(x);
@@ -39,7 +40,7 @@ function drag(pointerEvent, onIntersectingStart, onIntersectingStop) {
   };
   const stop = (event) => {
     if (event.pointerId !== pointerEvent.pointerId) return;
-    void target.removeEventListener("pointermove", move);
+    void ownerDocument.removeEventListener("pointermove", move, true);
     void ownerDocument.removeEventListener("pointerup", stop, true);
     void ownerDocument.removeEventListener("pointercancel", stop, true);
     if (target.hasPointerCapture(event.pointerId))
@@ -51,7 +52,7 @@ function drag(pointerEvent, onIntersectingStart, onIntersectingStop) {
     }
   };
   void target.setPointerCapture(pointerEvent.pointerId);
-  void target.addEventListener("pointermove", move);
+  void ownerDocument.addEventListener("pointermove", move, true);
   void ownerDocument.addEventListener("pointerup", stop, true);
   void ownerDocument.addEventListener("pointercancel", stop, true);
 }
@@ -66,7 +67,7 @@ function stopWatch(watcher, elementToWatch) {
 var controls = document.querySelector("div.controls");
 if (!controls) throw new Error();
 var boxes = [];
-for (let i = 0; i < 9; i++) {
+for (let i = 0; i < 12; i++) {
   const box = document.createElement("div");
   box.textContent = `${i + 1}`;
   box.classList.add(`box-${i}`);
