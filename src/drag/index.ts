@@ -9,6 +9,9 @@ export function drag(
   const target = pointerEvent.target
   if (!(target instanceof HTMLElement)) return
   const ownerDocument = target.ownerDocument
+  const position = target.style.position
+  const userSelect = ownerDocument.body.style.userSelect
+  const zIndex = target.style.zIndex
   let watcher: HTMLElement | undefined
   let intersecting = false
 
@@ -49,6 +52,9 @@ export function drag(
     void ownerDocument.removeEventListener('pointermove', move, true)
     void ownerDocument.removeEventListener('pointerup', stop, true)
     void ownerDocument.removeEventListener('pointercancel', stop, true)
+    ownerDocument.body.style.userSelect = userSelect
+    target.style.position = position
+    target.style.zIndex = zIndex
     if (target.hasPointerCapture(event.pointerId))
       void target.releasePointerCapture(event.pointerId)
     if (event.target !== target) {
@@ -57,6 +63,10 @@ export function drag(
       )
     }
   }
+  ownerDocument.body.style.userSelect = 'none'
+  if (ownerDocument.defaultView?.getComputedStyle(target).position === 'static')
+    target.style.position = 'relative'
+  target.style.zIndex = '2147483647'
   void target.setPointerCapture(pointerEvent.pointerId)
   void ownerDocument.addEventListener('pointermove', move, true)
   void ownerDocument.addEventListener('pointerup', stop, true)

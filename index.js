@@ -8,6 +8,9 @@ function drag(pointerEvent, onIntersectingStart, onIntersectingStop) {
   const target = pointerEvent.target;
   if (!(target instanceof HTMLElement)) return;
   const ownerDocument = target.ownerDocument;
+  const position = target.style.position;
+  const userSelect = ownerDocument.body.style.userSelect;
+  const zIndex = target.style.zIndex;
   let watcher;
   let intersecting = false;
   const closestWatcher = (event) => {
@@ -43,6 +46,9 @@ function drag(pointerEvent, onIntersectingStart, onIntersectingStop) {
     void ownerDocument.removeEventListener("pointermove", move, true);
     void ownerDocument.removeEventListener("pointerup", stop, true);
     void ownerDocument.removeEventListener("pointercancel", stop, true);
+    ownerDocument.body.style.userSelect = userSelect;
+    target.style.position = position;
+    target.style.zIndex = zIndex;
     if (target.hasPointerCapture(event.pointerId))
       void target.releasePointerCapture(event.pointerId);
     if (event.target !== target) {
@@ -51,6 +57,10 @@ function drag(pointerEvent, onIntersectingStart, onIntersectingStop) {
       );
     }
   };
+  ownerDocument.body.style.userSelect = "none";
+  if (ownerDocument.defaultView?.getComputedStyle(target).position === "static")
+    target.style.position = "relative";
+  target.style.zIndex = "2147483647";
   void target.setPointerCapture(pointerEvent.pointerId);
   void ownerDocument.addEventListener("pointermove", move, true);
   void ownerDocument.addEventListener("pointerup", stop, true);
@@ -65,6 +75,82 @@ function stopWatch(watcher, elementToWatch) {
   if (watcher.dataset.dragndropWatches === elementToWatch.dataset.dragndropId)
     delete watcher.dataset.dragndropWatches;
 }
+var lift = (element) => {
+  const position = element.style.position;
+  const zIndex = element.style.zIndex;
+  if (getComputedStyle(element).position === "static")
+    element.style.position = "relative";
+  element.style.zIndex = "2147483647";
+  return () => {
+    element.style.position = position;
+    element.style.zIndex = zIndex;
+  };
+};
+var moveTo = (dragged, target, change, animationDuration) => {
+  const restore = lift(dragged);
+  const x = Number(dragged.dataset.x ?? 0);
+  const y = Number(dragged.dataset.y ?? 0);
+  const from = dragged.getBoundingClientRect();
+  const to = target.getBoundingClientRect();
+  const next = `translate(${x + to.left - from.left}px, ${y + to.top - from.top}px)`;
+  const animation = dragged.animate(
+    [{ transform: dragged.style.transform || "none" }, { transform: next }],
+    { duration: animationDuration, easing: "ease" }
+  );
+  dragged.style.transform = next;
+  void animation.finished.finally(() => {
+    change();
+    delete dragged.dataset.x;
+    delete dragged.dataset.y;
+    dragged.style.transform = "";
+    restore();
+  });
+};
+var moveBack = (dragged, animationDuration) => {
+  const animation = dragged.animate(
+    [{ transform: dragged.style.transform || "none" }, { transform: "none" }],
+    { duration: animationDuration, easing: "ease" }
+  );
+  delete dragged.dataset.x;
+  delete dragged.dataset.y;
+  dragged.style.transform = "";
+  void animation.finished;
+};
+var targetFor = (dragged, target, change, animationDuration) => {
+  let active = false;
+  dragged.addEventListener("pointerdown", (event) => {
+    startWatch(target, dragged);
+    drag(
+      event,
+      () => {
+        active = true;
+      },
+      () => {
+        active = false;
+      }
+    );
+    const stop = () => {
+      stopWatch(target, dragged);
+      if (active) moveTo(dragged, target, change, animationDuration);
+      else moveBack(dragged, animationDuration);
+      active = false;
+    };
+    dragged.addEventListener("pointerup", stop, { once: true });
+    dragged.addEventListener("pointercancel", stop, { once: true });
+  });
+};
+var replacedDragTargetFor = (dragged, replaced, animationDuration = 200) => targetFor(
+  dragged,
+  replaced,
+  () => void replaced.replaceWith(dragged),
+  animationDuration
+);
+var appendedDragTargetFor = (dragged, parent, animationDuration = 200) => targetFor(
+  dragged,
+  parent,
+  () => void parent.appendChild(dragged),
+  animationDuration
+);
 function swapify(elements, animationDuration = 200) {
   const items = Array.from(elements).filter(
     (element) => element instanceof HTMLElement
@@ -138,3 +224,36 @@ for (let i = 0; i < 12; i++) {
   void controls.appendChild(box);
 }
 swapify(controls.children);
+var connect = (demo, template, targetFor2) => {
+  const row = demo.querySelector(".target-row");
+  const reset = demo.querySelector("[data-reset]");
+  if (!row || !reset) throw new Error();
+  const fill = () => {
+    row.replaceChildren(template.content.cloneNode(true));
+    const dragged2 = row.querySelector("[data-dragged]");
+    const target2 = row.querySelector("[data-target]");
+    if (!dragged2 || !target2) throw new Error();
+    targetFor2(dragged2, target2);
+  };
+  reset.addEventListener("click", fill);
+  const dragged = row.querySelector("[data-dragged]");
+  const target = row.querySelector("[data-target]");
+  if (!dragged || !target) throw new Error();
+  targetFor2(dragged, target);
+};
+var replaceDemo = document.querySelector(
+  "[data-replace-demo]"
+);
+var appendDemo = document.querySelector(
+  "[data-append-demo]"
+);
+var replaceTemplate = document.querySelector(
+  "#replace-demo-template"
+);
+var appendTemplate = document.querySelector(
+  "#append-demo-template"
+);
+if (!replaceDemo || !appendDemo || !replaceTemplate || !appendTemplate)
+  throw new Error();
+connect(replaceDemo, replaceTemplate, replacedDragTargetFor);
+connect(appendDemo, appendTemplate, appendedDragTargetFor);
