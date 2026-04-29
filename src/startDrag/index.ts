@@ -7,5 +7,6 @@ export function startDrag(pointerEvent: PointerEvent): void {
 
   target.setPointerCapture(pointerEvent.pointerId)
   target.addEventListener('pointermove', drag)
+  target.addEventListener('pointerup', stopDrag)
   target.addEventListener('pointercancel', stopDrag)
 }
