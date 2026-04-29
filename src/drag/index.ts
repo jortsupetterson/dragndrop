@@ -8,10 +8,7 @@ export function drag(
 ): void {
   const target = pointerEvent.target
   if (!(target instanceof HTMLElement)) return
-  const maybeWatcher = target.ownerDocument.getElementsByClassName(
-    `${target.className}-watcher`
-  )[0]
-  const watcher = maybeWatcher instanceof HTMLElement ? maybeWatcher : undefined
+  let watcher: HTMLElement | undefined
   let intersecting = false
 
   const move = (event: PointerEvent): void => {
@@ -20,6 +17,10 @@ export function drag(
     target.dataset.x = String(x)
     target.dataset.y = String(y)
     target.style.transform = `translate(${x}px, ${y}px)`
+    const maybeWatcher = target.ownerDocument.getElementsByClassName(
+      `${target.className}-watcher`
+    )[0]
+    watcher = maybeWatcher instanceof HTMLElement ? maybeWatcher : watcher
     if (!watcher) return
     const next = intersects(target, watcher)
     if (next === intersecting) return

@@ -22,11 +22,11 @@ void dragTarget.addEventListener('pointerdown', async (event) => {
       watcher.style.background = 'red'
     }
   )
-  startWatch(watcher, dragTarget)
+  void startWatch(watcher, dragTarget)
 })
 
 void dragTarget.addEventListener('pointerup', async () => {
-  stopWatch(watcher, dragTarget)
+  void stopWatch(watcher, dragTarget)
 })
 
 void document.body.appendChild(watcher)
