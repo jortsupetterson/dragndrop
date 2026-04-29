@@ -1,7 +1,7 @@
 {
   "type": "module",
   "license": "Apache-2.0",
-  "name": "@sovereignbase/package-name",
+  "name": "@sovereignbase/dragonwatch",
   "version": "0.0.0",
   "description": "",
   "keywords": [
@@ -67,10 +67,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sovereignbase/package-name.git"
+    "url": "git+https://github.com/sovereignbase/dragonwatch.git"
   },
   "bugs": {
-    "url": "https://github.com/sovereignbase/package-name/issues"
+    "url": "https://github.com/sovereignbase/dragonwatch/issues"
   },
-  "homepage": "https://sovereignbase.dev/package-name"
+  "homepage": "https://sovereignbase.dev/dragonwatch"
 }
