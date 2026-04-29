@@ -11,8 +11,11 @@ export function swapify(
 
   for (const item of items) {
     item.addEventListener('pointerdown', (event) => {
+      for (const animation of item.getAnimations()) animation.cancel()
       const originalTransform = item.style.transform
+      const originalTransition = item.style.transition
       item.dataset.dragging = 'true'
+      item.style.transition = 'none'
       drag(event, (dragged, watcher) => {
         const draggedRect = dragged.getBoundingClientRect()
         const watcherRect = watcher.getBoundingClientRect()
@@ -49,7 +52,20 @@ export function swapify(
       const stop = (): void => {
         if (item.dataset.dragging !== 'true') return
         delete item.dataset.dragging
-        item.style.transform = originalTransform
+        const currentTransform = item.style.transform || 'none'
+        const nextTransform = originalTransform || 'none'
+        const animation = item.animate(
+          [
+            { transform: currentTransform },
+            { transform: nextTransform },
+          ],
+          { duration: animationDuration, easing: 'ease' }
+        )
+        item.style.transform = nextTransform
+        void animation.finished.finally(() => {
+          item.style.transform = originalTransform
+          item.style.transition = originalTransition
+        })
         delete item.dataset.x
         delete item.dataset.y
         for (const other of items) if (other !== item) stopWatch(other, item)
