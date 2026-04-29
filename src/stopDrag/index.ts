@@ -5,6 +5,7 @@ export function stopDrag(pointerEvent: PointerEvent): void {
   if (!(target instanceof HTMLElement)) return
 
   target.removeEventListener('pointermove', drag)
+  target.removeEventListener('pointerup', stopDrag)
   target.removeEventListener('pointercancel', stopDrag)
 
   if (target.hasPointerCapture(pointerEvent.pointerId)) {
