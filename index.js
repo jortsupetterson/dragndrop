@@ -16,12 +16,8 @@ function drag(pointerEvent, onIntersectingStart, onIntersectingStop) {
       event.clientY
     );
     for (const element of elements) {
-      let current = element;
-      while (current instanceof HTMLElement) {
-        if (current !== target && current.classList.contains(watcherClass)) {
-          return current;
-        }
-        current = current.parentElement;
+      if (element instanceof HTMLElement && element !== target) {
+        if (element.classList.contains(watcherClass)) return element;
       }
     }
   };
