@@ -71,6 +71,7 @@ function swapify(elements, animationDuration = 200) {
   );
   for (const item of items) {
     item.addEventListener("pointerdown", (event) => {
+      for (const animation of item.getAnimations()) animation.cancel();
       const originalTransform = item.style.transform;
       const originalTransition = item.style.transition;
       item.dataset.dragging = "true";
@@ -129,13 +130,11 @@ function swapify(elements, animationDuration = 200) {
 }
 
 // in-browser-testing-libs.ts
-var nav = document.querySelector("nav");
 var controls = document.querySelector("div.controls");
-if (!controls || !nav) throw new Error();
+if (!controls) throw new Error();
 for (let i = 0; i < 12; i++) {
   const box = document.createElement("div");
   box.textContent = `${i + 1}`;
   void controls.appendChild(box);
 }
 swapify(controls.children);
-swapify(nav.children);
