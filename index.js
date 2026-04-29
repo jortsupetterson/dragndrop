@@ -12,7 +12,6 @@ function stopDrag(pointerEvent) {
   const target = pointerEvent.currentTarget;
   if (!(target instanceof HTMLElement)) return;
   target.removeEventListener("pointermove", drag);
-  target.removeEventListener("pointerup", stopDrag);
   target.removeEventListener("pointercancel", stopDrag);
   if (target.hasPointerCapture(pointerEvent.pointerId)) {
     target.releasePointerCapture(pointerEvent.pointerId);
@@ -23,7 +22,6 @@ function startDrag(pointerEvent) {
   if (!(target instanceof HTMLElement)) return;
   target.setPointerCapture(pointerEvent.pointerId);
   target.addEventListener("pointermove", drag);
-  target.addEventListener("pointerup", stopDrag);
   target.addEventListener("pointercancel", stopDrag);
 }
 function intersects(a, b) {
