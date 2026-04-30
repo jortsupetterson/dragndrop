@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="color-scheme" content="dark" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sovereignbase drag and watch demo</title>
+    <title>Sovereignbase dragonwatch library demo</title>
     <style>
       :root {
         color-scheme: dark;
@@ -58,23 +58,29 @@
         line-height: 1.6;
       }
 
+      div.row {
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+      }
+
       .controls {
         display: grid;
-        grid-template-columns: repeat(3, 100px);
+        grid-template-columns: repeat(3, 50px);
         justify-content: center;
-        gap: 12px;
+        gap: 5px;
         touch-action: none;
       }
 
       .controls > div {
         display: grid;
         place-items: center;
-        width: 100px;
-        height: 100px;
+        width: 50px;
+        height: 50px;
         border: 1px solid #fff;
         background: #000;
         color: #fff;
-        font: 700 2rem system-ui;
+        font: 700 1.5rem system-ui;
         position: relative;
         transition: transform 0.18s ease;
         user-select: none;
@@ -324,10 +330,15 @@
             >
           </div>
         </nav>
-        <h1></h1>
-        <p class="lede"></p>
-        <div class="controls"></div>
-        <div class="controls"></div>
+        <h1>Dragonwatch</h1>
+        <p class="lede">
+          All functionality uses two functions (drag and watch) where the name
+          comes from :p. The library is also collaboration ready. Just try it!
+        </p>
+        <div class="row">
+          <div class="controls"></div>
+          <div class="controls"></div>
+        </div>
         <div class="target-demos">
           <section class="target-demo" data-replace-demo>
             <div class="target-row">

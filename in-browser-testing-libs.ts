@@ -43,7 +43,7 @@ for (const controls of controlsArr) {
     }
   })
 }
-/////////
+////////////////////////////////////////////////////////////////////////////////////
 const connect = (
   demo: HTMLElement,
   template: HTMLTemplateElement,
