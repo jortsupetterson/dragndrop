@@ -124,9 +124,9 @@ export class DragTarget {
     )
   }
 
-  addEventListener<Type extends string>(
-    type: Type,
-    listener: DragTargetEventListenerFor<Type> | null,
+  addEventListener<K extends keyof DragTargetEventMap>(
+    type: K,
+    listener: DragTargetEventListenerFor<K> | null,
     options?: boolean | AddEventListenerOptions
   ): void {
     void this.eventTarget.addEventListener(
@@ -136,9 +136,9 @@ export class DragTarget {
     )
   }
 
-  removeEventListener<Type extends string>(
-    type: Type,
-    listener: DragTargetEventListenerFor<Type> | null,
+  removeEventListener<K extends keyof DragTargetEventMap>(
+    type: K,
+    listener: DragTargetEventListenerFor<K> | null,
     options?: boolean | EventListenerOptions
   ): void {
     void this.eventTarget.removeEventListener(

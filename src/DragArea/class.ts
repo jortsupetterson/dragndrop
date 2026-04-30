@@ -81,9 +81,9 @@ export class DragArea {
     void swapDraggedWithWatcher(thisEl, withEl, this.animationDuration)
   }
 
-  addEventListener<Type extends string>(
-    type: Type,
-    listener: DragAreaEventListenerFor<Type> | null,
+  addEventListener<K extends keyof DragAreaEventMap>(
+    type: K,
+    listener: DragAreaEventListenerFor<K> | null,
     options?: boolean | AddEventListenerOptions
   ): void {
     void this.eventTarget.addEventListener(
@@ -93,9 +93,9 @@ export class DragArea {
     )
   }
 
-  removeEventListener<Type extends string>(
-    type: Type,
-    listener: DragAreaEventListenerFor<Type> | null,
+  removeEventListener<K extends keyof DragAreaEventMap>(
+    type: K,
+    listener: DragAreaEventListenerFor<K> | null,
     options?: boolean | EventListenerOptions
   ): void {
     void this.eventTarget.removeEventListener(
