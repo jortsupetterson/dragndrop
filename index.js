@@ -243,9 +243,25 @@ var DragTarget = class {
           event,
           () => {
             active = true;
+            void this.eventTarget.dispatchEvent(
+              new CustomEvent(
+                "intersecting",
+                {
+                  detail: { thisEl: this.dragged, withEl: this.target }
+                }
+              )
+            );
           },
           () => {
             active = false;
+            void this.eventTarget.dispatchEvent(
+              new CustomEvent(
+                "notintersecting",
+                {
+                  detail: { thisEl: this.dragged, withEl: this.target }
+                }
+              )
+            );
           },
           (_dragged, { thisEl, x, y }, pointerEvent) => {
             void this.eventTarget.dispatchEvent(
@@ -353,13 +369,24 @@ var connect = (demo, template, targetFor) => {
     const dragged2 = row.querySelector("[data-dragged]");
     const target2 = row.querySelector("[data-target]");
     if (!dragged2 || !target2) throw new Error();
-    targetFor(dragged2, target2);
+    watchTarget(targetFor(dragged2, target2), target2);
   };
   reset.addEventListener("click", fill);
   const dragged = row.querySelector("[data-dragged]");
   const target = row.querySelector("[data-target]");
   if (!dragged || !target) throw new Error();
-  targetFor(dragged, target);
+  watchTarget(targetFor(dragged, target), target);
+};
+var watchTarget = (dragTarget, target) => {
+  dragTarget.addEventListener("intersecting", () => {
+    target.dataset.intersecting = "true";
+  });
+  dragTarget.addEventListener("notintersecting", () => {
+    delete target.dataset.intersecting;
+  });
+  dragTarget.addEventListener("swap", () => {
+    delete target.dataset.intersecting;
+  });
 };
 var replaceDemo = document.querySelector(
   "[data-replace-demo]"
@@ -376,10 +403,10 @@ if (!replaceDemo || !appendDemo || !replaceTemplate || !appendTemplate)
 connect(
   replaceDemo,
   replaceTemplate,
-  (dragged, target) => void new DragTarget(dragged, target, "replace")
+  (dragged, target) => new DragTarget(dragged, target, "replace")
 );
 connect(
   appendDemo,
   appendTemplate,
-  (dragged, target) => void new DragTarget(dragged, target, "append")
+  (dragged, target) => new DragTarget(dragged, target, "append")
 );

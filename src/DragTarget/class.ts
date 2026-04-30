@@ -34,9 +34,25 @@ export class DragTarget {
           event,
           () => {
             active = true
+            void this.eventTarget.dispatchEvent(
+              new CustomEvent<DragTargetEventMap['intersecting']>(
+                'intersecting',
+                {
+                  detail: { thisEl: this.dragged, withEl: this.target },
+                }
+              )
+            )
           },
           () => {
             active = false
+            void this.eventTarget.dispatchEvent(
+              new CustomEvent<DragTargetEventMap['notintersecting']>(
+                'notintersecting',
+                {
+                  detail: { thisEl: this.dragged, withEl: this.target },
+                }
+              )
+            )
           },
           (_dragged, { thisEl, x, y }, pointerEvent) => {
             void this.eventTarget.dispatchEvent(

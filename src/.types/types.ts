@@ -42,6 +42,8 @@ export type DragTargetAction = 'append' | 'replace'
 
 export type DragTargetEventMap = {
   drag: DragEventDetail
+  intersecting: SwapEventDetail
+  notintersecting: SwapEventDetail
   swap: SwapEventDetail
 }
 

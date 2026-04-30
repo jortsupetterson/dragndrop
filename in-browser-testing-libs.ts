@@ -15,7 +15,7 @@ new DragArea(controls.children)
 const connect = (
   demo: HTMLElement,
   template: HTMLTemplateElement,
-  targetFor: (dragged: HTMLElement, target: HTMLElement) => void
+  targetFor: (dragged: HTMLElement, target: HTMLElement) => DragTarget
 ): void => {
   const row: HTMLElement | null = demo.querySelector('.target-row')
   const reset: HTMLButtonElement | null = demo.querySelector('[data-reset]')
@@ -26,14 +26,26 @@ const connect = (
     const dragged: HTMLElement | null = row.querySelector('[data-dragged]')
     const target: HTMLElement | null = row.querySelector('[data-target]')
     if (!dragged || !target) throw new Error()
-    targetFor(dragged, target)
+    watchTarget(targetFor(dragged, target), target)
   }
 
   reset.addEventListener('click', fill)
   const dragged: HTMLElement | null = row.querySelector('[data-dragged]')
   const target: HTMLElement | null = row.querySelector('[data-target]')
   if (!dragged || !target) throw new Error()
-  targetFor(dragged, target)
+  watchTarget(targetFor(dragged, target), target)
+}
+
+const watchTarget = (dragTarget: DragTarget, target: HTMLElement): void => {
+  dragTarget.addEventListener('intersecting', () => {
+    target.dataset.intersecting = 'true'
+  })
+  dragTarget.addEventListener('notintersecting', () => {
+    delete target.dataset.intersecting
+  })
+  dragTarget.addEventListener('swap', () => {
+    delete target.dataset.intersecting
+  })
 }
 
 const replaceDemo: HTMLElement | null = document.querySelector(
@@ -53,10 +65,10 @@ if (!replaceDemo || !appendDemo || !replaceTemplate || !appendTemplate)
 connect(
   replaceDemo,
   replaceTemplate,
-  (dragged, target) => void new DragTarget(dragged, target, 'replace')
+  (dragged, target) => new DragTarget(dragged, target, 'replace')
 )
 connect(
   appendDemo,
   appendTemplate,
-  (dragged, target) => void new DragTarget(dragged, target, 'append')
+  (dragged, target) => new DragTarget(dragged, target, 'append')
 )
