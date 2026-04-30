@@ -1,10 +1,13 @@
 import {
+  moveDraggedToOffset,
   returnDraggedToStart,
   swapDraggedWithWatcher,
 } from '../.helpers/index.js'
 import type {
   DragAreaEventListenerFor,
   DragAreaEventMap,
+  DragInstruction,
+  SwapEventDetail,
 } from '../.types/types.js'
 import { drag } from '../drag/index.js'
 import { startWatch, stopWatch } from '../watch/index.js'
@@ -12,7 +15,10 @@ import { startWatch, stopWatch } from '../watch/index.js'
 export class DragArea {
   private readonly eventTarget = new EventTarget()
 
-  constructor(elements: Iterable<Element>, animationDuration: number = 200) {
+  constructor(
+    elements: Iterable<Element>,
+    private readonly animationDuration: number = 200
+  ) {
     const items = Array.from(elements).filter(
       (element): element is HTMLElement => element instanceof HTMLElement
     )
@@ -27,7 +33,11 @@ export class DragArea {
         void drag(
           event,
           (dragged, watcher) => {
-            void swapDraggedWithWatcher(dragged, watcher, animationDuration)
+            void swapDraggedWithWatcher(
+              dragged,
+              watcher,
+              this.animationDuration
+            )
             void this.eventTarget.dispatchEvent(
               new CustomEvent<DragAreaEventMap['swap']>('swap', {
                 detail: { thisEl: dragged, withEl: watcher },
@@ -35,10 +45,10 @@ export class DragArea {
             )
           },
           undefined,
-          (dragged, { x, y }, pointerEvent) => {
+          (_dragged, { thisEl, x, y }, pointerEvent) => {
             void this.eventTarget.dispatchEvent(
               new CustomEvent<DragAreaEventMap['drag']>('drag', {
-                detail: { pointerEvent, thisEl: dragged, x, y },
+                detail: { pointerEvent, thisEl, x, y },
               })
             )
           }
@@ -49,7 +59,7 @@ export class DragArea {
         const stop = (): void => {
           if (item.dataset.dragging !== 'true') return
           delete item.dataset.dragging
-          void returnDraggedToStart(item, animationDuration, {
+          void returnDraggedToStart(item, this.animationDuration, {
             transform: originalTransform,
             transition: originalTransition,
           })
@@ -61,6 +71,14 @@ export class DragArea {
         void item.addEventListener('pointercancel', stop, { once: true })
       })
     }
+  }
+
+  remoteDrag({ thisEl, x, y }: DragInstruction): void {
+    void moveDraggedToOffset(thisEl, x, y)
+  }
+
+  remoteSwap({ thisEl, withEl }: SwapEventDetail): void {
+    void swapDraggedWithWatcher(thisEl, withEl, this.animationDuration)
   }
 
   addEventListener<Type extends string>(

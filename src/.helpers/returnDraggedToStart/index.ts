@@ -1,4 +1,4 @@
-import { RestoredDragStyle } from '../../.types/types.js'
+import type { RestoredDragStyle } from '../../.types/types.js'
 
 export function returnDraggedToStart(
   dragged: HTMLElement,

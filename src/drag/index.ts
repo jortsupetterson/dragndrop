@@ -1,4 +1,4 @@
-import { intersects } from '../.helpers/index.js'
+import { intersects, moveDraggedToOffset } from '../.helpers/index.js'
 import type { DragMoveCallback, IntersectionCallback } from '../.types/types.js'
 
 export function drag(
@@ -33,10 +33,8 @@ export function drag(
     if (event.pointerId !== pointerEvent.pointerId) return
     const x = Number(target.dataset.x ?? 0) + event.movementX
     const y = Number(target.dataset.y ?? 0) + event.movementY
-    target.dataset.x = String(x)
-    target.dataset.y = String(y)
-    target.style.transform = `translate(${x}px, ${y}px)`
-    void onMove?.(target, { x, y }, event)
+    void moveDraggedToOffset(target, x, y)
+    void onMove?.(target, { thisEl: target, x, y }, event)
     const nextWatcher = closestWatcher(event)
     const next = nextWatcher ? intersects(target, nextWatcher) : false
     if (intersecting && (!next || nextWatcher !== watcher) && watcher)

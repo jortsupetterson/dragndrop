@@ -22,6 +22,11 @@ function intersects(a, b) {
   const br = b.getBoundingClientRect();
   return !(ar.right < br.left || ar.left > br.right || ar.bottom < br.top || ar.top > br.bottom);
 }
+function moveDraggedToOffset(dragged, x, y) {
+  dragged.dataset.x = String(x);
+  dragged.dataset.y = String(y);
+  dragged.style.transform = `translate(${x}px, ${y}px)`;
+}
 function returnDraggedToStart(dragged, animationDuration, restoredStyle) {
   const nextTransform = restoredStyle?.transform || "none";
   const animation = dragged.animate(
@@ -94,10 +99,8 @@ function drag(pointerEvent, onIntersectingStart, onIntersectingStop, onMove) {
     if (event.pointerId !== pointerEvent.pointerId) return;
     const x = Number(target.dataset.x ?? 0) + event.movementX;
     const y = Number(target.dataset.y ?? 0) + event.movementY;
-    target.dataset.x = String(x);
-    target.dataset.y = String(y);
-    target.style.transform = `translate(${x}px, ${y}px)`;
-    void onMove?.(target, { x, y }, event);
+    void moveDraggedToOffset(target, x, y);
+    void onMove?.(target, { thisEl: target, x, y }, event);
     const nextWatcher = closestWatcher(event);
     const next = nextWatcher ? intersects(target, nextWatcher) : false;
     if (intersecting && (!next || nextWatcher !== watcher) && watcher)
@@ -142,8 +145,8 @@ function stopWatch(watcher, elementToWatch) {
     delete watcher.dataset.dragonWatches;
 }
 var DragArea = class {
-  eventTarget = new EventTarget();
   constructor(elements, animationDuration = 200) {
+    this.animationDuration = animationDuration;
     const items = Array.from(elements).filter(
       (element) => element instanceof HTMLElement
     );
@@ -157,7 +160,11 @@ var DragArea = class {
         void drag(
           event,
           (dragged, watcher) => {
-            void swapDraggedWithWatcher(dragged, watcher, animationDuration);
+            void swapDraggedWithWatcher(
+              dragged,
+              watcher,
+              this.animationDuration
+            );
             void this.eventTarget.dispatchEvent(
               new CustomEvent("swap", {
                 detail: { thisEl: dragged, withEl: watcher }
@@ -165,10 +172,10 @@ var DragArea = class {
             );
           },
           void 0,
-          (dragged, { x, y }, pointerEvent) => {
+          (_dragged, { thisEl, x, y }, pointerEvent) => {
             void this.eventTarget.dispatchEvent(
               new CustomEvent("drag", {
-                detail: { pointerEvent, thisEl: dragged, x, y }
+                detail: { pointerEvent, thisEl, x, y }
               })
             );
           }
@@ -178,7 +185,7 @@ var DragArea = class {
         const stop = () => {
           if (item.dataset.dragging !== "true") return;
           delete item.dataset.dragging;
-          void returnDraggedToStart(item, animationDuration, {
+          void returnDraggedToStart(item, this.animationDuration, {
             transform: originalTransform,
             transition: originalTransition
           });
@@ -189,6 +196,14 @@ var DragArea = class {
         void item.addEventListener("pointercancel", stop, { once: true });
       });
     }
+  }
+  animationDuration;
+  eventTarget = new EventTarget();
+  manualDrag({ thisEl, x, y }) {
+    void moveDraggedToOffset(thisEl, x, y);
+  }
+  manualSwap({ thisEl, withEl }) {
+    void swapDraggedWithWatcher(thisEl, withEl, this.animationDuration);
   }
   addEventListener(type, listener, options) {
     void this.eventTarget.addEventListener(
@@ -212,7 +227,49 @@ var DragTarget = class {
     this.action = action;
     this.animationDuration = animationDuration;
     void this.dragged.addEventListener("pointerdown", (event) => {
-      void this.start(event);
+      let active = false;
+      startWatch(this.target, this.dragged);
+      void drag(
+        event,
+        () => {
+          active = true;
+        },
+        () => {
+          active = false;
+        },
+        (_dragged, { thisEl, x, y }, pointerEvent) => {
+          void this.eventTarget.dispatchEvent(
+            new CustomEvent("drag", {
+              detail: { pointerEvent, thisEl, x, y }
+            })
+          );
+        }
+      );
+      const stop = () => {
+        stopWatch(this.target, this.dragged);
+        if (active) {
+          void dropDraggedOnTarget(
+            this.dragged,
+            this.target,
+            () => {
+              if (this.action === "replace")
+                this.target.replaceWith(this.dragged);
+              else void this.target.appendChild(this.dragged);
+              void this.eventTarget.dispatchEvent(
+                new CustomEvent("swap", {
+                  detail: { thisEl: this.dragged, withEl: this.target }
+                })
+              );
+            },
+            this.animationDuration
+          );
+        } else {
+          void returnDraggedToStart(this.dragged, this.animationDuration);
+        }
+        active = false;
+      };
+      void this.dragged.addEventListener("pointerup", stop, { once: true });
+      void this.dragged.addEventListener("pointercancel", stop, { once: true });
     });
   }
   dragged;
@@ -220,6 +277,20 @@ var DragTarget = class {
   action;
   animationDuration;
   eventTarget = new EventTarget();
+  manualDrag({ thisEl, x, y }) {
+    void moveDraggedToOffset(thisEl, x, y);
+  }
+  manualSwap({ thisEl, withEl }) {
+    void dropDraggedOnTarget(
+      thisEl,
+      withEl,
+      () => {
+        if (this.action === "replace") withEl.replaceWith(thisEl);
+        else void withEl.appendChild(thisEl);
+      },
+      this.animationDuration
+    );
+  }
   addEventListener(type, listener, options) {
     void this.eventTarget.addEventListener(
       type,
@@ -233,53 +304,6 @@ var DragTarget = class {
       listener,
       options
     );
-  }
-  start(event) {
-    let active = false;
-    startWatch(this.target, this.dragged);
-    void drag(
-      event,
-      () => {
-        active = true;
-      },
-      () => {
-        active = false;
-      },
-      (dragged, { x, y }, pointerEvent) => {
-        this.eventTarget.dispatchEvent(
-          new CustomEvent("drag", {
-            detail: { pointerEvent, thisEl: dragged, x, y }
-          })
-        );
-      }
-    );
-    const stop = () => {
-      stopWatch(this.target, this.dragged);
-      if (active) {
-        dropDraggedOnTarget(
-          this.dragged,
-          this.target,
-          () => {
-            this.commit();
-            this.eventTarget.dispatchEvent(
-              new CustomEvent("swap", {
-                detail: { thisEl: this.dragged, withEl: this.target }
-              })
-            );
-          },
-          this.animationDuration
-        );
-      } else {
-        returnDraggedToStart(this.dragged, this.animationDuration);
-      }
-      active = false;
-    };
-    this.dragged.addEventListener("pointerup", stop, { once: true });
-    this.dragged.addEventListener("pointercancel", stop, { once: true });
-  }
-  commit() {
-    if (this.action === "replace") this.target.replaceWith(this.dragged);
-    else void this.target.appendChild(this.dragged);
   }
 };
 

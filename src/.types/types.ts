@@ -5,15 +5,18 @@ export type IntersectionCallback = (
 
 export type DragMoveCallback = (
   dragged: HTMLElement,
-  offset: { x: number; y: number },
+  offset: DragInstruction,
   pointerEvent: PointerEvent
 ) => void
 
-export type DragEventDetail = {
-  pointerEvent: PointerEvent
+export type DragInstruction = {
   thisEl: HTMLElement
   x: number
   y: number
+}
+
+export type DragEventDetail = DragInstruction & {
+  pointerEvent: PointerEvent
 }
 
 export type SwapEventDetail = {

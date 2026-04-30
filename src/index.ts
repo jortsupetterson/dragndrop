@@ -3,6 +3,7 @@ export type {
   DragAreaEventListenerFor,
   DragAreaEventMap,
   DragEventDetail,
+  DragInstruction,
   DragMoveCallback,
   DragTargetAction,
   DragTargetEventListener,
