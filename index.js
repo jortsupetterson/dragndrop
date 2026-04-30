@@ -1,5 +1,7 @@
 // dist/index.js
 function dropDraggedOnTarget(dragged, target, commit, animationDuration) {
+  const position = dragged.style.position;
+  const zIndex = dragged.style.zIndex;
   const x = Number(dragged.dataset.x ?? 0);
   const y = Number(dragged.dataset.y ?? 0);
   const from = dragged.getBoundingClientRect();
@@ -9,12 +11,17 @@ function dropDraggedOnTarget(dragged, target, commit, animationDuration) {
     [{ transform: dragged.style.transform || "none" }, { transform: next }],
     { duration: animationDuration, easing: "ease" }
   );
+  if (dragged.ownerDocument.defaultView?.getComputedStyle(dragged).position === "static")
+    dragged.style.position = "relative";
+  dragged.style.zIndex = "2147483647";
   dragged.style.transform = next;
   void animation.finished.finally(() => {
     void commit();
     delete dragged.dataset.x;
     delete dragged.dataset.y;
     dragged.style.transform = "";
+    dragged.style.position = position;
+    dragged.style.zIndex = zIndex;
   });
 }
 function intersects(a, b) {
