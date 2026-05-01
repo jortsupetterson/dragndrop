@@ -1,15 +1,25 @@
 import { spawnSync } from 'node:child_process'
-import fg from 'fast-glob'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 function run(command, args) {
   const result = spawnSync(command, args, {
     stdio: 'inherit',
+    cwd: root,
   })
   if (result.status !== 0) process.exit(result.status ?? 1)
 }
 
-const unitTests = fg.sync('test/unit/**/*.test.js')
-const integrationTests = fg.sync('test/integration/**/*.test.js')
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const c8 = resolve(root, 'node_modules', 'c8', 'bin', 'c8.js')
+const tests = resolve(root, 'test', 'run-node-tests.mjs')
 
-run(process.execPath, ['--test', '--test-concurrency=1', ...unitTests])
-run(process.execPath, ['--test', '--test-concurrency=1', ...integrationTests])
+run(process.execPath, [
+  c8,
+  '--clean',
+  '--reporter=lcov',
+  '--reporter=text',
+  '--reports-dir=coverage',
+  process.execPath,
+  tests,
+])

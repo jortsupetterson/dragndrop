@@ -35,10 +35,12 @@ jobs:
         run: npm test
 
       - name: Upload coverage reports to Codecov
+        if: matrix.node-version == '24.x'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage/lcov.info
+          files: ./coverage/lcov.info
+          disable_search: true
           fail_ci_if_error: true
 
       - name: Enforce formatting
