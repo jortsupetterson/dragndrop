@@ -15,7 +15,16 @@ import type {
 import { drag } from '../drag/index.js'
 import { startWatch, stopWatch } from '../watch/index.js'
 
+/**
+ * Coordinates pointer dragging from one DOM element into one or more targets.
+ *
+ * `DragTarget` commits at most once. A committed drag either appends the
+ * dragged element to the target or replaces the target, depending on action.
+ */
 export class DragTarget {
+  /**
+   * The target elements that can accept the dragged element.
+   */
   public readonly targets: readonly HTMLElement[]
 
   private readonly abortController = new AbortController()
@@ -23,6 +32,14 @@ export class DragTarget {
   private readonly restoredStyles = new Map<HTMLElement, RestoredDragStyle>()
   private used = false
 
+  /**
+   * Creates a drag target interaction.
+   *
+   * @param dragged The element users can drag.
+   * @param targets One target element, or an iterable of target elements.
+   * @param action The DOM operation to perform when a target accepts the drag.
+   * @param animationDuration The duration of generated animations, in milliseconds.
+   */
   constructor(
     public readonly dragged: HTMLElement,
     targets: HTMLElement | Iterable<HTMLElement>,
@@ -118,6 +135,11 @@ export class DragTarget {
     )
   }
 
+  /**
+   * Replays a drag movement for the managed dragged element.
+   *
+   * @param instruction The dragged element and translate offset to apply.
+   */
   remoteDrag({ thisEl, x, y }: DragInstruction): void {
     if (this.used || thisEl !== this.dragged) return
     for (const animation of thisEl.getAnimations()) animation.cancel()
@@ -128,6 +150,11 @@ export class DragTarget {
     void moveDraggedToOffset(thisEl, x, y)
   }
 
+  /**
+   * Replays a committed drop onto a target.
+   *
+   * @param swap The dragged element and target element to commit.
+   */
   remoteSwap({ thisEl, withEl }: SwapEventDetail): void {
     if (this.used || thisEl !== this.dragged) return
     const target = this.targets.find((target) => target === withEl)
@@ -150,6 +177,11 @@ export class DragTarget {
     )
   }
 
+  /**
+   * Replays the end of an uncommitted drag operation.
+   *
+   * @param event The settle event detail to apply.
+   */
   remoteSettle({ thisEl }: DragTargetEventMap['settle']): void {
     if (this.used || thisEl !== this.dragged) return
     const restoredStyle = this.restoredStyles.get(thisEl)
@@ -157,10 +189,23 @@ export class DragTarget {
     void returnDraggedToStart(thisEl, this.animationDuration, restoredStyle)
   }
 
+  /**
+   * Returns the first target with the given element id.
+   *
+   * @param id The element id to match.
+   * @returns The matching target, or `undefined` if no target matches.
+   */
   getTargetById(id: string): HTMLElement | undefined {
     return this.targets.find((target) => target.id === id)
   }
 
+  /**
+   * Appends an event listener for events whose type is `type`.
+   *
+   * @param type The drag target event type to listen for.
+   * @param listener The callback or event listener object that receives the event.
+   * @param options Options that control listener registration.
+   */
   addEventListener<K extends keyof DragTargetEventMap>(
     type: K,
     listener: DragTargetEventListenerFor<K> | null,
@@ -173,6 +218,13 @@ export class DragTarget {
     )
   }
 
+  /**
+   * Removes an event listener previously registered with {@link addEventListener}.
+   *
+   * @param type The drag target event type.
+   * @param listener The callback or event listener object to remove.
+   * @param options Options that identify the listener registration.
+   */
   removeEventListener<K extends keyof DragTargetEventMap>(
     type: K,
     listener: DragTargetEventListenerFor<K> | null,

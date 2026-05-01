@@ -5,20 +5,35 @@ import {
   swapDraggedWithWatcher,
 } from '../.helpers/index.js'
 import type {
-  DragAreaEventListenerFor,
-  DragAreaEventMap,
   DragInstruction,
   RestoredDragStyle,
+  SwapSetEventListenerFor,
+  SwapSetEventMap,
   SwapEventDetail,
 } from '../.types/types.js'
 import { drag } from '../drag/index.js'
 import { startWatch, stopWatch } from '../watch/index.js'
 
-export class DragArea {
+/**
+ * Coordinates pointer dragging for a set of interchangeable DOM elements.
+ *
+ * `SwapSet` swaps members when the dragged member intersects another member
+ * and emits typed events that can be replayed against another set.
+ */
+export class SwapSet {
+  /**
+   * The draggable members managed by this set.
+   */
   public readonly members: readonly HTMLElement[]
   private readonly eventTarget = new EventTarget()
   private readonly restoredStyles = new Map<HTMLElement, RestoredDragStyle>()
 
+  /**
+   * Creates a swap set from the provided elements.
+   *
+   * @param elements Elements to include; non-HTMLElement values are ignored.
+   * @param animationDuration The duration of generated animations, in milliseconds.
+   */
   constructor(
     elements: Iterable<Element>,
     private readonly animationDuration: number = 200
@@ -42,7 +57,7 @@ export class DragArea {
               this.animationDuration
             )
             void this.eventTarget.dispatchEvent(
-              new CustomEvent<DragAreaEventMap['swap']>('swap', {
+              new CustomEvent<SwapSetEventMap['swap']>('swap', {
                 detail: { thisEl: dragged, withEl: watcher },
               })
             )
@@ -50,7 +65,7 @@ export class DragArea {
           undefined,
           (_dragged, { thisEl, x, y }, pointerEvent) => {
             void this.eventTarget.dispatchEvent(
-              new CustomEvent<DragAreaEventMap['drag']>('drag', {
+              new CustomEvent<SwapSetEventMap['drag']>('drag', {
                 detail: { pointerEvent, thisEl, x, y },
               })
             )
@@ -64,7 +79,7 @@ export class DragArea {
           delete item.dataset.dragging
           void returnDraggedToStart(item, this.animationDuration, restoredStyle)
           void this.eventTarget.dispatchEvent(
-            new CustomEvent<DragAreaEventMap['settle']>('settle', {
+            new CustomEvent<SwapSetEventMap['settle']>('settle', {
               detail: { thisEl: item },
             })
           )
@@ -78,6 +93,11 @@ export class DragArea {
     }
   }
 
+  /**
+   * Replays a drag movement against one managed member.
+   *
+   * @param instruction The member and translate offset to apply.
+   */
   remoteDrag({ thisEl, x, y }: DragInstruction): void {
     for (const animation of thisEl.getAnimations()) animation.cancel()
     if (!this.restoredStyles.has(thisEl)) {
@@ -87,23 +107,46 @@ export class DragArea {
     void moveDraggedToOffset(thisEl, x, y)
   }
 
+  /**
+   * Replays a member swap.
+   *
+   * @param swap The member and peer element to swap.
+   */
   remoteSwap({ thisEl, withEl }: SwapEventDetail): void {
     void swapDraggedWithWatcher(thisEl, withEl, this.animationDuration)
   }
 
-  remoteSettle({ thisEl }: DragAreaEventMap['settle']): void {
+  /**
+   * Replays the end of a drag operation for one managed member.
+   *
+   * @param event The settle event detail to apply.
+   */
+  remoteSettle({ thisEl }: SwapSetEventMap['settle']): void {
     const restoredStyle = this.restoredStyles.get(thisEl)
     void this.restoredStyles.delete(thisEl)
     void returnDraggedToStart(thisEl, this.animationDuration, restoredStyle)
   }
 
+  /**
+   * Returns the first managed member with the given element id.
+   *
+   * @param id The element id to match.
+   * @returns The matching member, or `undefined` if no member matches.
+   */
   getMemberById(id: string): HTMLElement | undefined {
     return this.members.find((member) => member.id === id)
   }
 
-  addEventListener<K extends keyof DragAreaEventMap>(
+  /**
+   * Appends an event listener for events whose type is `type`.
+   *
+   * @param type The swap set event type to listen for.
+   * @param listener The callback or event listener object that receives the event.
+   * @param options Options that control listener registration.
+   */
+  addEventListener<K extends keyof SwapSetEventMap>(
     type: K,
-    listener: DragAreaEventListenerFor<K> | null,
+    listener: SwapSetEventListenerFor<K> | null,
     options?: boolean | AddEventListenerOptions
   ): void {
     void this.eventTarget.addEventListener(
@@ -113,9 +156,16 @@ export class DragArea {
     )
   }
 
-  removeEventListener<K extends keyof DragAreaEventMap>(
+  /**
+   * Removes an event listener previously registered with {@link addEventListener}.
+   *
+   * @param type The swap set event type.
+   * @param listener The callback or event listener object to remove.
+   * @param options Options that identify the listener registration.
+   */
+  removeEventListener<K extends keyof SwapSetEventMap>(
     type: K,
-    listener: DragAreaEventListenerFor<K> | null,
+    listener: SwapSetEventListenerFor<K> | null,
     options?: boolean | EventListenerOptions
   ): void {
     void this.eventTarget.removeEventListener(

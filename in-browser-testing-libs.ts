@@ -1,10 +1,10 @@
-import { DragArea, DragTarget } from './dist/index.js'
+import { DragTarget, SwapSet } from './dist/index.js'
 
 const controlsArr: HTMLElement[] = Array.from(
-  document.querySelectorAll('[data-drag-area]')
+  document.querySelectorAll('[data-swap-set]')
 )
 
-const areaArr: DragArea[] = []
+const swapSets: SwapSet[] = []
 
 for (const controls of controlsArr) {
   if (!controls) throw new Error()
@@ -15,31 +15,31 @@ for (const controls of controlsArr) {
     void controls.appendChild(box)
   }
 
-  const area = new DragArea(controls.children)
-  void areaArr.push(area)
-  area.addEventListener('drag', ({ detail }) => {
-    for (const otherArea of areaArr) {
-      if (otherArea === area) continue
-      const thisEl = otherArea.getMemberById(detail.thisEl.id)
+  const swapSet = new SwapSet(controls.children)
+  void swapSets.push(swapSet)
+  swapSet.addEventListener('drag', ({ detail }) => {
+    for (const otherSet of swapSets) {
+      if (otherSet === swapSet) continue
+      const thisEl = otherSet.getMemberById(detail.thisEl.id)
       if (!thisEl) continue
-      void otherArea.remoteDrag({ thisEl, x: detail.x, y: detail.y })
+      void otherSet.remoteDrag({ thisEl, x: detail.x, y: detail.y })
     }
   })
-  area.addEventListener('swap', ({ detail }) => {
-    for (const otherArea of areaArr) {
-      if (otherArea === area) continue
-      const thisEl = otherArea.getMemberById(detail.thisEl.id)
-      const withEl = otherArea.getMemberById(detail.withEl.id)
+  swapSet.addEventListener('swap', ({ detail }) => {
+    for (const otherSet of swapSets) {
+      if (otherSet === swapSet) continue
+      const thisEl = otherSet.getMemberById(detail.thisEl.id)
+      const withEl = otherSet.getMemberById(detail.withEl.id)
       if (!thisEl || !withEl) continue
-      void otherArea.remoteSwap({ thisEl, withEl })
+      void otherSet.remoteSwap({ thisEl, withEl })
     }
   })
-  area.addEventListener('settle', ({ detail }) => {
-    for (const otherArea of areaArr) {
-      if (otherArea === area) continue
-      const thisEl = otherArea.getMemberById(detail.thisEl.id)
+  swapSet.addEventListener('settle', ({ detail }) => {
+    for (const otherSet of swapSets) {
+      if (otherSet === swapSet) continue
+      const thisEl = otherSet.getMemberById(detail.thisEl.id)
       if (!thisEl) continue
-      void otherArea.remoteSettle({ thisEl })
+      void otherSet.remoteSettle({ thisEl })
     }
   })
 }

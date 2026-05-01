@@ -164,99 +164,15 @@ function stopWatch(watcher, elementToWatch) {
   if (watcher.dataset.dragonWatches === elementToWatch.dataset.dragonwatchId)
     delete watcher.dataset.dragonWatches;
 }
-var DragArea = class {
-  constructor(elements, animationDuration = 200) {
-    this.animationDuration = animationDuration;
-    this.members = Array.from(elements).filter(
-      (element) => element instanceof HTMLElement
-    );
-    for (const item of this.members) {
-      void item.addEventListener("pointerdown", (event) => {
-        const restoredStyle = raiseDragged(item);
-        for (const animation of item.getAnimations()) animation.cancel();
-        item.dataset.dragging = "true";
-        item.style.transition = "none";
-        void drag(
-          event,
-          (dragged, watcher) => {
-            void swapDraggedWithWatcher(
-              dragged,
-              watcher,
-              this.animationDuration
-            );
-            void this.eventTarget.dispatchEvent(
-              new CustomEvent("swap", {
-                detail: { thisEl: dragged, withEl: watcher }
-              })
-            );
-          },
-          void 0,
-          (_dragged, { thisEl, x, y }, pointerEvent) => {
-            void this.eventTarget.dispatchEvent(
-              new CustomEvent("drag", {
-                detail: { pointerEvent, thisEl, x, y }
-              })
-            );
-          }
-        );
-        for (const other of this.members)
-          if (other !== item) void startWatch(other, item);
-        const stop = () => {
-          if (item.dataset.dragging !== "true") return;
-          delete item.dataset.dragging;
-          void returnDraggedToStart(item, this.animationDuration, restoredStyle);
-          void this.eventTarget.dispatchEvent(
-            new CustomEvent("settle", {
-              detail: { thisEl: item }
-            })
-          );
-          for (const other of this.members)
-            if (other !== item) void stopWatch(other, item);
-        };
-        void item.addEventListener("pointerup", stop, { once: true });
-        void item.addEventListener("pointercancel", stop, { once: true });
-      });
-    }
-  }
-  animationDuration;
-  members;
-  eventTarget = new EventTarget();
-  restoredStyles = /* @__PURE__ */ new Map();
-  remoteDrag({ thisEl, x, y }) {
-    for (const animation of thisEl.getAnimations()) animation.cancel();
-    if (!this.restoredStyles.has(thisEl)) {
-      void this.restoredStyles.set(thisEl, raiseDragged(thisEl));
-      thisEl.style.transition = "none";
-    }
-    void moveDraggedToOffset(thisEl, x, y);
-  }
-  remoteSwap({ thisEl, withEl }) {
-    void swapDraggedWithWatcher(thisEl, withEl, this.animationDuration);
-  }
-  remoteSettle({ thisEl }) {
-    const restoredStyle = this.restoredStyles.get(thisEl);
-    void this.restoredStyles.delete(thisEl);
-    void returnDraggedToStart(thisEl, this.animationDuration, restoredStyle);
-  }
-  getMemberById(id) {
-    return this.members.find((member) => member.id === id);
-  }
-  addEventListener(type, listener, options) {
-    void this.eventTarget.addEventListener(
-      type,
-      listener,
-      options
-    );
-  }
-  removeEventListener(type, listener, options) {
-    void this.eventTarget.removeEventListener(
-      type,
-      listener,
-      options
-    );
-  }
-};
 var DragTarget = class {
+  /**
+   * Creates a drag target interaction.
+   *
+   * @param dragged The element users can drag.
+   * @param targets One target element, or an iterable of target elements.
+   * @param action The DOM operation to perform when a target accepts the drag.
+   * @param animationDuration The duration of generated animations, in milliseconds.
+   */
   constructor(dragged, targets, action, animationDuration = 200) {
     this.dragged = dragged;
     this.action = action;
@@ -348,11 +264,19 @@ var DragTarget = class {
   dragged;
   action;
   animationDuration;
+  /**
+   * The target elements that can accept the dragged element.
+   */
   targets;
   abortController = new AbortController();
   eventTarget = new EventTarget();
   restoredStyles = /* @__PURE__ */ new Map();
   used = false;
+  /**
+   * Replays a drag movement for the managed dragged element.
+   *
+   * @param instruction The dragged element and translate offset to apply.
+   */
   remoteDrag({ thisEl, x, y }) {
     if (this.used || thisEl !== this.dragged) return;
     for (const animation of thisEl.getAnimations()) animation.cancel();
@@ -362,6 +286,11 @@ var DragTarget = class {
     }
     void moveDraggedToOffset(thisEl, x, y);
   }
+  /**
+   * Replays a committed drop onto a target.
+   *
+   * @param swap The dragged element and target element to commit.
+   */
   remoteSwap({ thisEl, withEl }) {
     if (this.used || thisEl !== this.dragged) return;
     const target = this.targets.find((target2) => target2 === withEl);
@@ -383,15 +312,33 @@ var DragTarget = class {
       restoredStyle
     );
   }
+  /**
+   * Replays the end of an uncommitted drag operation.
+   *
+   * @param event The settle event detail to apply.
+   */
   remoteSettle({ thisEl }) {
     if (this.used || thisEl !== this.dragged) return;
     const restoredStyle = this.restoredStyles.get(thisEl);
     void this.restoredStyles.delete(thisEl);
     void returnDraggedToStart(thisEl, this.animationDuration, restoredStyle);
   }
+  /**
+   * Returns the first target with the given element id.
+   *
+   * @param id The element id to match.
+   * @returns The matching target, or `undefined` if no target matches.
+   */
   getTargetById(id) {
     return this.targets.find((target) => target.id === id);
   }
+  /**
+   * Appends an event listener for events whose type is `type`.
+   *
+   * @param type The drag target event type to listen for.
+   * @param listener The callback or event listener object that receives the event.
+   * @param options Options that control listener registration.
+   */
   addEventListener(type, listener, options) {
     void this.eventTarget.addEventListener(
       type,
@@ -399,6 +346,149 @@ var DragTarget = class {
       options
     );
   }
+  /**
+   * Removes an event listener previously registered with {@link addEventListener}.
+   *
+   * @param type The drag target event type.
+   * @param listener The callback or event listener object to remove.
+   * @param options Options that identify the listener registration.
+   */
+  removeEventListener(type, listener, options) {
+    void this.eventTarget.removeEventListener(
+      type,
+      listener,
+      options
+    );
+  }
+};
+var SwapSet = class {
+  /**
+   * Creates a swap set from the provided elements.
+   *
+   * @param elements Elements to include; non-HTMLElement values are ignored.
+   * @param animationDuration The duration of generated animations, in milliseconds.
+   */
+  constructor(elements, animationDuration = 200) {
+    this.animationDuration = animationDuration;
+    this.members = Array.from(elements).filter(
+      (element) => element instanceof HTMLElement
+    );
+    for (const item of this.members) {
+      void item.addEventListener("pointerdown", (event) => {
+        const restoredStyle = raiseDragged(item);
+        for (const animation of item.getAnimations()) animation.cancel();
+        item.dataset.dragging = "true";
+        item.style.transition = "none";
+        void drag(
+          event,
+          (dragged, watcher) => {
+            void swapDraggedWithWatcher(
+              dragged,
+              watcher,
+              this.animationDuration
+            );
+            void this.eventTarget.dispatchEvent(
+              new CustomEvent("swap", {
+                detail: { thisEl: dragged, withEl: watcher }
+              })
+            );
+          },
+          void 0,
+          (_dragged, { thisEl, x, y }, pointerEvent) => {
+            void this.eventTarget.dispatchEvent(
+              new CustomEvent("drag", {
+                detail: { pointerEvent, thisEl, x, y }
+              })
+            );
+          }
+        );
+        for (const other of this.members)
+          if (other !== item) void startWatch(other, item);
+        const stop = () => {
+          if (item.dataset.dragging !== "true") return;
+          delete item.dataset.dragging;
+          void returnDraggedToStart(item, this.animationDuration, restoredStyle);
+          void this.eventTarget.dispatchEvent(
+            new CustomEvent("settle", {
+              detail: { thisEl: item }
+            })
+          );
+          for (const other of this.members)
+            if (other !== item) void stopWatch(other, item);
+        };
+        void item.addEventListener("pointerup", stop, { once: true });
+        void item.addEventListener("pointercancel", stop, { once: true });
+      });
+    }
+  }
+  animationDuration;
+  /**
+   * The draggable members managed by this set.
+   */
+  members;
+  eventTarget = new EventTarget();
+  restoredStyles = /* @__PURE__ */ new Map();
+  /**
+   * Replays a drag movement against one managed member.
+   *
+   * @param instruction The member and translate offset to apply.
+   */
+  remoteDrag({ thisEl, x, y }) {
+    for (const animation of thisEl.getAnimations()) animation.cancel();
+    if (!this.restoredStyles.has(thisEl)) {
+      void this.restoredStyles.set(thisEl, raiseDragged(thisEl));
+      thisEl.style.transition = "none";
+    }
+    void moveDraggedToOffset(thisEl, x, y);
+  }
+  /**
+   * Replays a member swap.
+   *
+   * @param swap The member and peer element to swap.
+   */
+  remoteSwap({ thisEl, withEl }) {
+    void swapDraggedWithWatcher(thisEl, withEl, this.animationDuration);
+  }
+  /**
+   * Replays the end of a drag operation for one managed member.
+   *
+   * @param event The settle event detail to apply.
+   */
+  remoteSettle({ thisEl }) {
+    const restoredStyle = this.restoredStyles.get(thisEl);
+    void this.restoredStyles.delete(thisEl);
+    void returnDraggedToStart(thisEl, this.animationDuration, restoredStyle);
+  }
+  /**
+   * Returns the first managed member with the given element id.
+   *
+   * @param id The element id to match.
+   * @returns The matching member, or `undefined` if no member matches.
+   */
+  getMemberById(id) {
+    return this.members.find((member) => member.id === id);
+  }
+  /**
+   * Appends an event listener for events whose type is `type`.
+   *
+   * @param type The swap set event type to listen for.
+   * @param listener The callback or event listener object that receives the event.
+   * @param options Options that control listener registration.
+   */
+  addEventListener(type, listener, options) {
+    void this.eventTarget.addEventListener(
+      type,
+      listener,
+      options
+    );
+  }
+  /**
+   * Removes an event listener previously registered with {@link addEventListener}.
+   *
+   * @param type The swap set event type.
+   * @param listener The callback or event listener object to remove.
+   * @param options Options that identify the listener registration.
+   */
   removeEventListener(type, listener, options) {
     void this.eventTarget.removeEventListener(
       type,
@@ -410,9 +500,9 @@ var DragTarget = class {
 
 // in-browser-testing-libs.ts
 var controlsArr = Array.from(
-  document.querySelectorAll("[data-drag-area]")
+  document.querySelectorAll("[data-swap-set]")
 );
-var areaArr = [];
+var swapSets = [];
 for (const controls of controlsArr) {
   if (!controls) throw new Error();
   for (let i = 0; i < 9; i++) {
@@ -421,31 +511,31 @@ for (const controls of controlsArr) {
     box.textContent = `${i + 1}`;
     void controls.appendChild(box);
   }
-  const area = new DragArea(controls.children);
-  void areaArr.push(area);
-  area.addEventListener("drag", ({ detail }) => {
-    for (const otherArea of areaArr) {
-      if (otherArea === area) continue;
-      const thisEl = otherArea.getMemberById(detail.thisEl.id);
+  const swapSet = new SwapSet(controls.children);
+  void swapSets.push(swapSet);
+  swapSet.addEventListener("drag", ({ detail }) => {
+    for (const otherSet of swapSets) {
+      if (otherSet === swapSet) continue;
+      const thisEl = otherSet.getMemberById(detail.thisEl.id);
       if (!thisEl) continue;
-      void otherArea.remoteDrag({ thisEl, x: detail.x, y: detail.y });
+      void otherSet.remoteDrag({ thisEl, x: detail.x, y: detail.y });
     }
   });
-  area.addEventListener("swap", ({ detail }) => {
-    for (const otherArea of areaArr) {
-      if (otherArea === area) continue;
-      const thisEl = otherArea.getMemberById(detail.thisEl.id);
-      const withEl = otherArea.getMemberById(detail.withEl.id);
+  swapSet.addEventListener("swap", ({ detail }) => {
+    for (const otherSet of swapSets) {
+      if (otherSet === swapSet) continue;
+      const thisEl = otherSet.getMemberById(detail.thisEl.id);
+      const withEl = otherSet.getMemberById(detail.withEl.id);
       if (!thisEl || !withEl) continue;
-      void otherArea.remoteSwap({ thisEl, withEl });
+      void otherSet.remoteSwap({ thisEl, withEl });
     }
   });
-  area.addEventListener("settle", ({ detail }) => {
-    for (const otherArea of areaArr) {
-      if (otherArea === area) continue;
-      const thisEl = otherArea.getMemberById(detail.thisEl.id);
+  swapSet.addEventListener("settle", ({ detail }) => {
+    for (const otherSet of swapSets) {
+      if (otherSet === swapSet) continue;
+      const thisEl = otherSet.getMemberById(detail.thisEl.id);
       if (!thisEl) continue;
-      void otherArea.remoteSettle({ thisEl });
+      void otherSet.remoteSettle({ thisEl });
     }
   });
 }

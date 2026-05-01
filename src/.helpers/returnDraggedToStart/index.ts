@@ -1,6 +1,13 @@
 import type { RestoredDragStyle } from '../../.types/types.js'
 import { restoreDraggedStyle } from '../restoreDraggedStyle/index.js'
 
+/**
+ * Animates a dragged element back to its starting transform.
+ *
+ * @param dragged The element to return.
+ * @param animationDuration The duration of the return animation, in milliseconds.
+ * @param restoredStyle Inline style state to restore after the animation.
+ */
 export function returnDraggedToStart(
   dragged: HTMLElement,
   animationDuration: number,

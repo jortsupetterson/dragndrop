@@ -7,11 +7,11 @@
     <title>Dragonwatch Drag And Watch Demo</title>
     <meta
       name="description"
-      content="Browser demo for @sovereignbase/dragonwatch, a TypeScript drag and watch library with DragArea and DragTarget event streams, remote replay, swap, append, and replace behavior."
+      content="Browser demo for @sovereignbase/dragonwatch, a TypeScript drag and watch library with SwapSet and DragTarget event streams, remote replay, swap, append, and replace behavior."
     />
     <meta
       name="keywords"
-      content="dragonwatch, drag and drop TypeScript, DragArea, DragTarget, drag events, remote drag replay, collaborative drag and drop, sovereignbase dragonwatch"
+      content="dragonwatch, drag and drop TypeScript, SwapSet, DragTarget, drag events, remote drag replay, collaborative drag and drop, sovereignbase dragonwatch"
     />
     <meta name="author" content="Jori Lehtinen" />
     <meta name="theme-color" content="#000000" />
@@ -64,7 +64,7 @@
     <meta property="og:title" content="Sovereignbase Dragonwatch Demo" />
     <meta
       property="og:description"
-      content="Interactive browser demo for @sovereignbase/dragonwatch with DragArea, DragTarget, event streams, and remote drag replay."
+      content="Interactive browser demo for @sovereignbase/dragonwatch with SwapSet, DragTarget, event streams, and remote drag replay."
     />
     <meta property="og:url" content="https://sovereignbase.dev/dragonwatch/" />
     <meta
@@ -87,7 +87,7 @@
     <meta name="twitter:title" content="Sovereignbase Dragonwatch Demo" />
     <meta
       name="twitter:description"
-      content="Interactive browser demo for @sovereignbase/dragonwatch with DragArea, DragTarget, event streams, and remote drag replay."
+      content="Interactive browser demo for @sovereignbase/dragonwatch with SwapSet, DragTarget, event streams, and remote drag replay."
     />
     <meta
       name="twitter:image"
@@ -152,7 +152,7 @@
             "name": "@sovereignbase/dragonwatch",
             "alternateName": ["dragonwatch"],
             "url": "https://sovereignbase.dev/dragonwatch/",
-            "description": "TypeScript drag and watch library for DragArea and DragTarget interactions, event streams, remote replay, swap, append, and replace behavior.",
+            "description": "TypeScript drag and watch library for SwapSet and DragTarget interactions, event streams, remote replay, swap, append, and replace behavior.",
             "codeRepository": "https://github.com/sovereignbase/dragonwatch",
             "license": "https://www.apache.org/licenses/LICENSE-2.0",
             "programmingLanguage": ["TypeScript", "JavaScript"],
@@ -160,7 +160,7 @@
             "keywords": [
               "drag and drop",
               "TypeScript",
-              "DragArea",
+              "SwapSet",
               "DragTarget",
               "remote drag replay",
               "collaborative drag and drop"
@@ -190,12 +190,12 @@
             "@id": "https://sovereignbase.dev/dragonwatch/#demo",
             "name": "Dragonwatch Demo",
             "url": "https://sovereignbase.dev/dragonwatch/",
-            "description": "Interactive browser demo for @sovereignbase/dragonwatch featuring DragArea, DragTarget, event streams, and remote drag replay.",
+            "description": "Interactive browser demo for @sovereignbase/dragonwatch featuring SwapSet, DragTarget, event streams, and remote drag replay.",
             "applicationCategory": "DeveloperApplication",
             "operatingSystem": "Any",
             "browserRequirements": "Requires a modern browser with Pointer Events support.",
             "featureList": [
-              "DragArea swapping",
+              "SwapSet swapping",
               "DragTarget append and replace",
               "Typed drag events",
               "Remote drag replay"
@@ -218,7 +218,7 @@
             "@id": "https://sovereignbase.dev/dragonwatch/#webpage",
             "url": "https://sovereignbase.dev/dragonwatch/",
             "name": "Dragonwatch Drag And Watch Demo",
-            "description": "Interactive browser demo for @sovereignbase/dragonwatch with DragArea, DragTarget, event streams, and remote drag replay.",
+            "description": "Interactive browser demo for @sovereignbase/dragonwatch with SwapSet, DragTarget, event streams, and remote drag replay.",
             "inLanguage": "en",
             "isPartOf": {
               "@id": "https://sovereignbase.dev/dragonwatch/#website"
@@ -622,12 +622,12 @@
         </p>
         <div class="area-demos">
           <section class="control-card">
-            <h5>DragArea 1</h5>
-            <div class="drag-grid" data-drag-area></div>
+            <h5>SwapSet 1</h5>
+            <div class="drag-grid" data-swap-set></div>
           </section>
           <section class="control-card">
-            <h5>DragArea 2</h5>
-            <div class="drag-grid" data-drag-area></div>
+            <h5>SwapSet 2</h5>
+            <div class="drag-grid" data-swap-set></div>
           </section>
         </div>
 
@@ -713,13 +713,13 @@
 
         <div class="control-card">
           <h5>Code</h5>
-          <pre><code class="language-typescript">import { DragArea, DragTarget } from '@sovereignbase/dragonwatch'
+          <pre><code class="language-typescript">import { SwapSet, DragTarget } from '@sovereignbase/dragonwatch'
 
 const controlsArr: HTMLElement[] = Array.from(
-  document.querySelectorAll('[data-drag-area]')
+  document.querySelectorAll('[data-swap-set]')
 )
 
-const areaArr: DragArea[] = []
+const swapSets: SwapSet[] = []
 
 for (const controls of controlsArr) {
   if (!controls) throw new Error()
@@ -730,31 +730,31 @@ for (const controls of controlsArr) {
     void controls.appendChild(box)
   }
 
-  const area = new DragArea(controls.children)
-  void areaArr.push(area)
-  area.addEventListener('drag', ({ detail }) => {
-    for (const otherArea of areaArr) {
-      if (otherArea === area) continue
-      const thisEl = otherArea.getMemberById(detail.thisEl.id)
+  const swapSet = new SwapSet(controls.children)
+  void swapSets.push(swapSet)
+  swapSet.addEventListener('drag', ({ detail }) => {
+    for (const otherSet of swapSets) {
+      if (otherSet === swapSet) continue
+      const thisEl = otherSet.getMemberById(detail.thisEl.id)
       if (!thisEl) continue
-      void otherArea.remoteDrag({ thisEl, x: detail.x, y: detail.y })
+      void otherSet.remoteDrag({ thisEl, x: detail.x, y: detail.y })
     }
   })
-  area.addEventListener('swap', ({ detail }) => {
-    for (const otherArea of areaArr) {
-      if (otherArea === area) continue
-      const thisEl = otherArea.getMemberById(detail.thisEl.id)
-      const withEl = otherArea.getMemberById(detail.withEl.id)
+  swapSet.addEventListener('swap', ({ detail }) => {
+    for (const otherSet of swapSets) {
+      if (otherSet === swapSet) continue
+      const thisEl = otherSet.getMemberById(detail.thisEl.id)
+      const withEl = otherSet.getMemberById(detail.withEl.id)
       if (!thisEl || !withEl) continue
-      void otherArea.remoteSwap({ thisEl, withEl })
+      void otherSet.remoteSwap({ thisEl, withEl })
     }
   })
-  area.addEventListener('settle', ({ detail }) => {
-    for (const otherArea of areaArr) {
-      if (otherArea === area) continue
-      const thisEl = otherArea.getMemberById(detail.thisEl.id)
+  swapSet.addEventListener('settle', ({ detail }) => {
+    for (const otherSet of swapSets) {
+      if (otherSet === swapSet) continue
+      const thisEl = otherSet.getMemberById(detail.thisEl.id)
       if (!thisEl) continue
-      void otherArea.remoteSettle({ thisEl })
+      void otherSet.remoteSettle({ thisEl })
     }
   })
 }

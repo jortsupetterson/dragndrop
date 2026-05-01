@@ -2,6 +2,15 @@ import type { DropCommit, RestoredDragStyle } from '../../.types/types.js'
 import { raiseDragged } from '../raiseDragged/index.js'
 import { restoreDraggedStyle } from '../restoreDraggedStyle/index.js'
 
+/**
+ * Animates a dragged element to a target and commits the drop.
+ *
+ * @param dragged The element being dropped.
+ * @param target The element that receives the drop.
+ * @param commit Callback that performs the final DOM mutation.
+ * @param animationDuration The duration of the drop animation, in milliseconds.
+ * @param restoredStyle Inline style state to restore after the commit.
+ */
 export function dropDraggedOnTarget(
   dragged: HTMLElement,
   target: HTMLElement,

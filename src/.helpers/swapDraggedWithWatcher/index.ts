@@ -1,3 +1,10 @@
+/**
+ * Swaps a dragged element with a watched element and animates the watched element.
+ *
+ * @param dragged The element currently being dragged.
+ * @param watcher The watched element to swap with the dragged element.
+ * @param animationDuration The duration of the watcher animation, in milliseconds.
+ */
 export function swapDraggedWithWatcher(
   dragged: HTMLElement,
   watcher: HTMLElement,

@@ -6,6 +6,14 @@ import {
 } from '../.helpers/index.js'
 import type { DragMoveCallback, IntersectionCallback } from '../.types/types.js'
 
+/**
+ * Starts a pointer-driven drag operation for the pointer event target.
+ *
+ * @param pointerEvent The initiating pointer event.
+ * @param onIntersectingStart Callback invoked when the dragged element begins intersecting a watched element.
+ * @param onIntersectingStop Callback invoked when the dragged element stops intersecting a watched element.
+ * @param onMove Callback invoked after each accepted pointer movement.
+ */
 export function drag(
   pointerEvent: PointerEvent,
   onIntersectingStart?: IntersectionCallback,

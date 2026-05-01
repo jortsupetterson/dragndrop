@@ -16,7 +16,7 @@ Dragonwatch is built around two functions, `drag` and `watch`, which is where th
 
 ## Goals
 
-- Typed event maps for `DragArea` and `DragTarget`.
+- Typed event maps for `SwapSet` and `DragTarget`.
 - Remote replay support for drag movement, settling, and swaps.
 - Minimal DOM behavior without framework dependencies.
 - Side-effect free package entrypoint.
@@ -29,48 +29,54 @@ npm install @sovereignbase/dragonwatch
 pnpm add @sovereignbase/dragonwatch
 # or
 yarn add @sovereignbase/dragonwatch
+# or
+bun add @sovereignbase/dragonwatch
+# or
+deno add jsr:@sovereignbase/dragonwatch
+# or
+vlt install jsr:@sovereignbase/dragonwatch
 ```
 
 ## Usage
 
-### DragArea
+### SwapSet
 
 ```ts
-import { DragArea } from '@sovereignbase/dragonwatch'
+import { SwapSet } from '@sovereignbase/dragonwatch'
 
-const area = new DragArea(document.querySelectorAll('[data-draggable]'))
+const swapSet = new SwapSet(document.querySelectorAll('[data-draggable]'))
 
-area.addEventListener('drag', ({ detail }) => {
+swapSet.addEventListener('drag', ({ detail }) => {
   console.log(detail.thisEl, detail.x, detail.y)
 })
 
-area.addEventListener('swap', ({ detail }) => {
+swapSet.addEventListener('swap', ({ detail }) => {
   console.log(detail.thisEl, detail.withEl)
 })
 ```
 
-### Remote DragArea replay
+### Remote SwapSet replay
 
 ```ts
-import { DragArea } from '@sovereignbase/dragonwatch'
+import { SwapSet } from '@sovereignbase/dragonwatch'
 
-const localArea = new DragArea(localGrid.children)
-const remoteArea = new DragArea(remoteGrid.children)
+const localSet = new SwapSet(localGrid.children)
+const remoteSet = new SwapSet(remoteGrid.children)
 
-localArea.addEventListener('drag', ({ detail }) => {
-  const thisEl = remoteArea.getMemberById(detail.thisEl.id)
-  if (thisEl) remoteArea.remoteDrag({ thisEl, x: detail.x, y: detail.y })
+localSet.addEventListener('drag', ({ detail }) => {
+  const thisEl = remoteSet.getMemberById(detail.thisEl.id)
+  if (thisEl) remoteSet.remoteDrag({ thisEl, x: detail.x, y: detail.y })
 })
 
-localArea.addEventListener('swap', ({ detail }) => {
-  const thisEl = remoteArea.getMemberById(detail.thisEl.id)
-  const withEl = remoteArea.getMemberById(detail.withEl.id)
-  if (thisEl && withEl) remoteArea.remoteSwap({ thisEl, withEl })
+localSet.addEventListener('swap', ({ detail }) => {
+  const thisEl = remoteSet.getMemberById(detail.thisEl.id)
+  const withEl = remoteSet.getMemberById(detail.withEl.id)
+  if (thisEl && withEl) remoteSet.remoteSwap({ thisEl, withEl })
 })
 
-localArea.addEventListener('settle', ({ detail }) => {
-  const thisEl = remoteArea.getMemberById(detail.thisEl.id)
-  if (thisEl) remoteArea.remoteSettle({ thisEl })
+localSet.addEventListener('settle', ({ detail }) => {
+  const thisEl = remoteSet.getMemberById(detail.thisEl.id)
+  if (thisEl) remoteSet.remoteSettle({ thisEl })
 })
 ```
 
@@ -106,15 +112,15 @@ dragTarget.addEventListener('swap', ({ detail }) => {
 
 ### Browsers
 
-`DragArea` wires each member to pointer dragging and swaps members when the dragged element intersects a watched member. `DragTarget` wires one dragged element to one or more target options and commits once, using either append or replace behavior.
+`SwapSet` wires each member to pointer dragging and swaps members when the dragged element intersects a watched member. `DragTarget` wires one dragged element to one or more target options and commits once, using either append or replace behavior.
 
 ### Remote Replay
 
-Both classes emit `drag`, `settle`, and `swap` events for replaying the same interaction elsewhere. `DragArea` exposes `members` and `getMemberById`; `DragTarget` exposes `dragged`, `targets`, and `getTargetById` so callers can map local elements to remote-compatible elements by id.
+Both classes emit `drag`, `settle`, and `swap` events for replaying the same interaction elsewhere. `SwapSet` exposes `members` and `getMemberById`; `DragTarget` exposes `dragged`, `targets`, and `getTargetById` so callers can map local elements to remote-compatible elements by id.
 
 ### Events
 
-`DragArea` events:
+`SwapSet` events:
 
 - `drag`
 - `settle`

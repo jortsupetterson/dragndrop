@@ -1,7 +1,10 @@
+/**
+ * Pointer-driven drag and watch primitives for browser DOM elements.
+ *
+ * @packageDocumentation
+ */
+
 export type {
-  DragAreaEventListener,
-  DragAreaEventListenerFor,
-  DragAreaEventMap,
   DragEventDetail,
   DragInstruction,
   DragMoveCallback,
@@ -11,9 +14,12 @@ export type {
   DragTargetEventMap,
   IntersectionCallback,
   SettleEventDetail,
+  SwapSetEventListener,
+  SwapSetEventListenerFor,
+  SwapSetEventMap,
   SwapEventDetail,
 } from './.types/types.js'
-export { DragArea } from './DragArea/class.js'
 export { DragTarget } from './DragTarget/class.js'
+export { SwapSet } from './SwapSet/class.js'
 export { drag } from './drag/index.js'
 export { startWatch, stopWatch } from './watch/index.js'
