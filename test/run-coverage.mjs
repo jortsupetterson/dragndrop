@@ -17,6 +17,8 @@ const tests = resolve(root, 'test', 'run-node-tests.mjs')
 run(process.execPath, [
   c8,
   '--clean',
+  '--100',
+  '--per-file',
   '--reporter=lcov',
   '--reporter=text',
   '--reports-dir=coverage',
